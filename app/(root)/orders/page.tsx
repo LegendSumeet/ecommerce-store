@@ -7,7 +7,6 @@ const Orders = async () => {
   const { userId } = auth();
   const orders = await getOrders(userId as string);
 
-  console.log(orders[0].products);
 
   return (
     <div className="px-10 py-5 max-sm:px-3">
@@ -23,7 +22,7 @@ const Orders = async () => {
             <div className="flex gap-20 max-md:flex-col max-md:gap-3">
               <p className="text-base-bold">Order ID: {order._id}</p>
               <p className="text-base-bold">
-                Total Amount: ${order.totalAmount}
+                Total Amount: ₹{order.totalAmount}
               </p>
             </div>
 
