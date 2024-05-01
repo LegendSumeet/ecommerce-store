@@ -33,3 +33,8 @@ export const getRelatedProducts = async (productId: string) => {
   const relatedProducts = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${productId}/related`)
   return await relatedProducts.json()
 }
+
+export const getAddress = async (userid:string) => {
+  const address = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/address/${userid}`)
+  return await address.json()
+}

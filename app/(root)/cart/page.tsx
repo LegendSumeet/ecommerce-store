@@ -26,14 +26,21 @@ const Cart = () => {
 
   const handleCheckout = async () => {
     try {
-      // Ensure user is logged in
       if (!user) {
-        // Redirect to sign-in page if user is not logged in
         router.push("/sign-in");
         return;
       }
+      const userid = user.id;
 
-      // Log that checkout process has started
+      const address = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/address/${userid}`,{
+        method: "GET",
+    
+
+      });
+      if (address.status === 404) {
+        router.push("/address");
+        return;
+      }
       console.log("Starting checkout process...");
     const gety = JSON.stringify({ cartItems: cart.cartItems, customer });
     console.log(gety);
@@ -53,7 +60,7 @@ const Cart = () => {
       // Configure Razorpay options
       const options = {
         key: process.env.RAZORPAY_KEY,
-        name: "Manu Arora Pvt Ltd",
+        name: "Eshoppe Ecommerce",
         currency: data.currency,
         amount: data.amount,
         order_id: data.id,
@@ -64,29 +71,21 @@ const Cart = () => {
           razorpay_order_id: any;
           razorpay_signature: any;
         }) {
-          // Handle payment response here
-          console.log("Payment successful!");
-          console.log("Payment ID:", response.razorpay_payment_id);
-          console.log("Order ID:", response.razorpay_order_id);
-          console.log("Signature:", response.razorpay_signature);
+          router.push("/payment_success");
         },
         prefill: {
-          name: "Manu Arora",
-          email: "manuarorawork@gmail.com",
+          name:customer.name,
+          email: customer.email,
           contact: "9999999999",
         },
       };
 
-      // Create Razorpay payment object
       const paymentObject = new (window as any).Razorpay(options);
 
-      // Open Razorpay payment dialog
       paymentObject.open();
 
-      // Log checkout data
       console.log("Checkout data:", data);
     } catch (err) {
-      // Log any errors
       console.error("Error during checkout:", err);
     }
   };
