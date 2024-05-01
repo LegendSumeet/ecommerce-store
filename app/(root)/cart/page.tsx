@@ -1,8 +1,8 @@
 "use client";
 
 import useCart from "@/lib/hooks/useCart";
-
 import { useUser } from "@clerk/nextjs";
+import { log } from "console";
 import { MinusCircle, PlusCircle, Trash } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -26,22 +26,86 @@ const Cart = () => {
 
   const handleCheckout = async () => {
     try {
+      // Ensure user is logged in
       if (!user) {
-        router.push("sign-in");
-      } else {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkout`, {
-          method: "POST",
-          body: JSON.stringify({ cartItems: cart.cartItems, customer }),
-        });
-        const data = await res.json();
-        window.location.href = data.url;
-        console.log(data);
+        // Redirect to sign-in page if user is not logged in
+        router.push("/sign-in");
+        return;
       }
+
+      // Log that checkout process has started
+      console.log("Starting checkout process...");
+    const gety = JSON.stringify({ cartItems: cart.cartItems, customer });
+    console.log(gety);
+
+      // Initialize Razorpay
+      initializeRazorpay();
+
+      // Fetch checkout data from the server
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkout`, {
+        method: "POST",
+        body: JSON.stringify({ cartItems: cart.cartItems, customer }),
+      });
+
+      // Parse response JSON
+      const data = await res.json();
+
+      // Configure Razorpay options
+      const options = {
+        key: process.env.RAZORPAY_KEY,
+        name: "Manu Arora Pvt Ltd",
+        currency: data.currency,
+        amount: data.amount,
+        order_id: data.id,
+        description: "Thank you for your purchase",
+        image: "https://manuarora.in/logo.png",
+        handler: function (response: {
+          razorpay_payment_id: any;
+          razorpay_order_id: any;
+          razorpay_signature: any;
+        }) {
+          // Handle payment response here
+          console.log("Payment successful!");
+          console.log("Payment ID:", response.razorpay_payment_id);
+          console.log("Order ID:", response.razorpay_order_id);
+          console.log("Signature:", response.razorpay_signature);
+        },
+        prefill: {
+          name: "Manu Arora",
+          email: "manuarorawork@gmail.com",
+          contact: "9999999999",
+        },
+      };
+
+      // Create Razorpay payment object
+      const paymentObject = new (window as any).Razorpay(options);
+
+      // Open Razorpay payment dialog
+      paymentObject.open();
+
+      // Log checkout data
+      console.log("Checkout data:", data);
     } catch (err) {
-      console.log("[checkout_POST]", err);
+      // Log any errors
+      console.error("Error during checkout:", err);
     }
   };
 
+  const initializeRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+
+      script.onload = () => {
+        resolve(true);
+      };
+      script.onerror = () => {
+        resolve(false);
+      };
+
+      document.body.appendChild(script);
+    });
+  };
   return (
     <div className="flex gap-20 py-16 px-10 max-lg:flex-col max-sm:px-3">
       <div className="w-2/3 max-lg:w-full">

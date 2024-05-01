@@ -44,3 +44,10 @@ type OrderItemType = {
   quantity: number;
   _id: string;
 }
+
+
+declare global {
+  interface Window {
+      Razorpay: any; // Adjust the type accordingly if you have more specific type information
+  }
+}
