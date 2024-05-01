@@ -14,8 +14,6 @@ interface AddressData {
     userid: string;
   }
   
-
-   
   const Address = ({ onClose, initialValues }: { onClose: () => void; initialValues: AddressData }) => {
     const { user } = useUser();
     const router = useRouter();
