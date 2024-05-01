@@ -1,6 +1,9 @@
 "use client";
 
 import useCart from "@/lib/hooks/useCart";
+import UserCustomer from "@/lib/models/customer";
+import Order from "@/lib/models/products";
+
 import { useUser } from "@clerk/nextjs";
 import { log } from "console";
 import { MinusCircle, PlusCircle, Trash } from "lucide-react";
@@ -32,23 +35,22 @@ const Cart = () => {
       }
       const userid = user.id;
 
-      const address = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/address/${userid}`,{
-        method: "GET",
-    
-
-      });
+      const address = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/address/${userid}`,
+        {
+          method: "GET",
+        }
+      );
       if (address.status === 404) {
         router.push("/address");
         return;
       }
       console.log("Starting checkout process...");
-    const gety = JSON.stringify({ cartItems: cart.cartItems, customer });
-    console.log(gety);
+      const gety = JSON.stringify({ cartItems: cart.cartItems, customer });
+      console.log(gety);
 
-      // Initialize Razorpay
       initializeRazorpay();
 
-      // Fetch checkout data from the server
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkout`, {
         method: "POST",
         body: JSON.stringify({ cartItems: cart.cartItems, customer }),
@@ -66,15 +68,31 @@ const Cart = () => {
         order_id: data.id,
         description: "Thank you for your purchase",
         image: "https://manuarora.in/logo.png",
-        handler: function (response: {
+        handler: async function (response: {
           razorpay_payment_id: any;
           razorpay_order_id: any;
           razorpay_signature: any;
         }) {
-          router.push("/payment_success");
+          try {
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/paymentdone`,
+              {
+                method: "POST",
+                body: JSON.stringify({ cartItems: cart.cartItems, customer }),
+              }
+            );
+            const order = await res.json();
+        
+            router.push("/payment_success");
+          } catch (error) {
+            console.log("Error occurred while processing order:", error);
+            console.error("Error occurred while processing order:", error);
+            router.push("/cart");
+          }
         },
+
         prefill: {
-          name:customer.name,
+          name: customer.name,
           email: customer.email,
           contact: "9999999999",
         },
